@@ -17,10 +17,8 @@ pub fn SimpleRng::new(seed : Int64) -> SimpleRng {
 ///|
 /// Create a new random number generator with current time as seed
 pub fn SimpleRng::new_with_time() -> SimpleRng {
-  // Use a simple time-based seed (this is basic implementation)
-  // In a real implementation, you'd use system time or entropy
-  // For demonstration, we use a different seed each time by using different base values
-  { state: 1664525L }
+  // Use current time as seed for randomness
+  { state: @env.now().reinterpret_as_int64() }
 }
 
 ///|
@@ -53,8 +51,9 @@ pub fn SimpleRng::fill_bytes(
 ///|
 /// Generate random bytes using a new RNG instance
 pub fn random_bytes(count : Int) -> FixedArray[Byte] {
-  // Use a different seed based on the count to get variation
-  let rng = SimpleRng::new(1664525L + count.to_int64() * 1013904223L)
+  // Use current time as seed for randomness
+  let seed = @env.now().reinterpret_as_int64()
+  let rng = SimpleRng::new(seed)
   let bytes : FixedArray[Byte] = FixedArray::make(count, b'\x00')
   rng.fill_bytes(bytes)
   bytes

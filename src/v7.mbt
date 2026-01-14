@@ -2,11 +2,8 @@
 
 ///|
 /// Get current Unix timestamp in milliseconds
-/// This is a simplified implementation - in practice you'd use system time
 fn current_timestamp_ms() -> Int64 {
-  // Placeholder implementation - returns a fixed timestamp for demonstration
-  // In a real implementation, this would call system time functions
-  1640995200000L // 2022-01-01 00:00:00 UTC in milliseconds
+  @env.now().reinterpret_as_int64()
 }
 
 ///|
