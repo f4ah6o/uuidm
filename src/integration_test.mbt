@@ -216,284 +216,33 @@ test "library_demo_output" {
   // Create deterministic demo output with manually constructed UUIDs
   // v4 UUID: ef82f904-93d6-4d78-b76a-c12c9b3e8520
   let v4_uuid = Uuid::from_bytes(
-    b'\xEF', b'\x82', b'\xF9', b'\x04',  // time_low
-    b'\x93', b'\xD6',  // time_mid
-    b'\x4D', b'\x78',  // time_hi_and_version (4xxx => version 4)
-    b'\xB7', b'\x6A',  // clock_seq_hi_and_reserved (variant) + clock_seq_low
-    b'\xC1', b'\x2C', b'\x9B', b'\x3E', b'\x85', b'\x20'  // node
+    b'\xEF', b'\x82', b'\xF9', b'\x04', // time_low
+     b'\x93', b'\xD6', // time_mid
+     b'\x4D', b'\x78', // time_hi_and_version (4xxx => version 4)
+     b'\xB7', b'\x6A', // clock_seq_hi_and_reserved (variant) + clock_seq_low
+     b'\xC1', b'\x2C', b'\x9B', b'\x3E', b'\x85', b'\x20', // node
   )
   // v7 UUID: 019bd39e-bbd0-7f82-b904-93d63d78776a
   let v7_uuid = Uuid::from_bytes(
-    b'\x01', b'\x9B', b'\xD3', b'\x9E', b'\xBB', b'\xD0',  // timestamp
-    b'\x7F', b'\x82',  // random with version 7 (7xxx => 0x7f)
-    b'\xB9', b'\x04',  // random with variant
-    b'\x93', b'\xD6', b'\x3D', b'\x78', b'\x77', b'\x6A'  // remaining random
+    b'\x01', b'\x9B', b'\xD3', b'\x9E', b'\xBB', b'\xD0', // timestamp
+     b'\x7F', b'\x82', // random with version 7 (7xxx => 0x7f)
+     b'\xB9', b'\x04', // random with variant
+     b'\x93', b'\xD6', b'\x3D', b'\x78', b'\x77', b'\x6A', // remaining random
   )
-  let demo_output = "UUID v4: " + v4_uuid.to_string() + "\n" +
-                   "UUID v7: " + v7_uuid.to_string() + "\n" +
-                   "Nil UUID: " + nil().to_string()
+  let demo_output = "UUID v4: " +
+    v4_uuid.to_string() +
+    "\n" +
+    "UUID v7: " +
+    v7_uuid.to_string() +
+    "\n" +
+    "Nil UUID: " +
+    nil().to_string()
   inspect(
     demo_output,
     content=(
       #|UUID v4: ef82f904-93d6-4d78-b76a-c12c9b3e8520
       #|UUID v7: 019bd39e-bbd0-7f82-b904-93d63d78776a
       #|Nil UUID: 00000000-0000-0000-0000-000000000000
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     ),
   )
 

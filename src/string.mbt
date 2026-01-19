@@ -97,7 +97,9 @@ pub fn from_string(s : String) -> Uuid? {
     let c = Int::unsafe_to_char(s.code_unit_at(i).to_int())
     if c == '-' {
       // Skip hyphens
-    } else if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') {
+    } else if (c >= '0' && c <= '9') ||
+      (c >= 'a' && c <= 'f') ||
+      (c >= 'A' && c <= 'F') {
       hex_chars = hex_chars + c.to_string()
     } else {
       // Invalid character
@@ -114,20 +116,18 @@ pub fn from_string(s : String) -> Uuid? {
   let bytes : FixedArray[Byte] = FixedArray::make(16, b'\x00')
   for i = 0; i < 16; i = i + 1 {
     let high_char = Int::unsafe_to_char(hex_chars.code_unit_at(i * 2).to_int())
-    let low_char = Int::unsafe_to_char(hex_chars.code_unit_at(i * 2 + 1).to_int())
+    let low_char = Int::unsafe_to_char(
+      hex_chars.code_unit_at(i * 2 + 1).to_int(),
+    )
 
     // Check if characters are valid hex
     let high = try_hex_char_to_int(high_char)
     let low = try_hex_char_to_int(low_char)
-
     match (high, low) {
-      (Some(h), Some(l)) => {
-        bytes[i] = (h << 4).lor(l).to_byte()
-      }
+      (Some(h), Some(l)) => bytes[i] = (h << 4).lor(l).to_byte()
       _ => return None
     }
   }
-
   Some(Uuid::new(bytes))
 }
 

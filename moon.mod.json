@@ -1,6 +1,6 @@
 {
   "name": "f4ah6o/uuidm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "deps": {
     "moonbitlang/quickcheck": "0.9.9",
     "f4ah6o/aletheia": "0.4.0"

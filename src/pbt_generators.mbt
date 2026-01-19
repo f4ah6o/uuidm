@@ -14,14 +14,17 @@ fn gen_uuid() -> Uuid {
   // Use random bytes for distribution control
   let bytes = random_bytes(1)
   let freq = bytes[0].to_int() & 0xFF
-
   if freq < 165 {
     // Normal: ~65% random v4
     v4()
   } else if freq < 216 {
     // Edge: ~20% special cases (nil, max)
     let special_bytes = random_bytes(1)
-    if (special_bytes[0].to_int() & 1) == 0 { nil() } else { max() }
+    if (special_bytes[0].to_int() & 1) == 0 {
+      nil()
+    } else {
+      max()
+    }
   } else {
     // Boundary: ~15% custom bytes
     let custom = random_bytes(16)
@@ -34,7 +37,6 @@ fn gen_uuid() -> Uuid {
 fn gen_uuid_string() -> String {
   let bytes = random_bytes(1)
   let freq = bytes[0].to_int() & 0xFF
-
   if freq < 179 {
     // Normal: ~70% standard format
     gen_uuid().to_string()
@@ -52,7 +54,6 @@ fn gen_uuid_string() -> String {
 fn gen_test_name() -> String {
   let bytes = random_bytes(1)
   let freq = bytes[0].to_int() & 0xFF
-
   if freq < 166 {
     // Normal: ~65% typical strings
     let len_bytes = random_bytes(2)
@@ -95,27 +96,34 @@ fn gen_random_string(len : Int) -> String {
 fn gen_v7_timestamp() -> Int64 {
   let bytes = random_bytes(1)
   let freq = bytes[0].to_int() & 0xFF
-
   if freq < 166 {
     // Normal: ~65% current timestamp ± random offset
     let base = @env.now().reinterpret_as_int64()
     let offset_bytes = random_bytes(4)
-    let offset = ((offset_bytes[0].to_int() << 24) | (offset_bytes[1].to_int() << 16) |
-                  (offset_bytes[2].to_int() << 8) | offset_bytes[3].to_int()).to_int64()
+    let offset = ((offset_bytes[0].to_int() << 24) |
+    (offset_bytes[1].to_int() << 16) |
+    (offset_bytes[2].to_int() << 8) |
+    offset_bytes[3].to_int()).to_int64()
     // Scale to ±1 day
-    let scaled = (offset % 172800000) - 86400000
+    let scaled = offset % 172800000 - 86400000
     base + scaled
   } else if freq < 217 {
     // Edge: ~20% zero or small values
     let edge_bytes = random_bytes(1)
-    let edge = (edge_bytes[0].to_int() & 1)
-    if edge == 0 { 0L } else { ((edge_bytes[0].to_int() & 0xFF) % 1000 + 1).to_int64() }
+    let edge = edge_bytes[0].to_int() & 1
+    if edge == 0 {
+      0L
+    } else {
+      ((edge_bytes[0].to_int() & 0xFF) % 1000 + 1).to_int64()
+    }
   } else {
     // Boundary: ~15% large values
     let high_bytes = random_bytes(4)
-    let high = ((high_bytes[0].to_int() << 24) | (high_bytes[1].to_int() << 16) |
-                (high_bytes[2].to_int() << 8) | high_bytes[3].to_int()).to_int64()
-    0xFFFFFFFFFFFFL - (high % 1000000)
+    let high = ((high_bytes[0].to_int() << 24) |
+    (high_bytes[1].to_int() << 16) |
+    (high_bytes[2].to_int() << 8) |
+    high_bytes[3].to_int()).to_int64()
+    0xFFFFFFFFFFFFL - high % 1000000
   }
 }
 
@@ -124,14 +132,13 @@ fn gen_v7_timestamp() -> Int64 {
 fn gen_uuid_bytes() -> FixedArray[Byte] {
   let bytes = random_bytes(1)
   let freq = bytes[0].to_int() & 0xFF
-
   if freq < 179 {
     // Normal: ~70% random
     random_bytes(16)
   } else if freq < 217 {
     // Edge: ~15% special patterns
     let special_bytes = random_bytes(1)
-    let special = (special_bytes[0].to_int() & 1)
+    let special = special_bytes[0].to_int() & 1
     if special == 0 {
       FixedArray::make(16, b'\x00')
     } else {

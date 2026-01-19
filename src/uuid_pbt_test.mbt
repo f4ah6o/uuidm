@@ -41,11 +41,10 @@ test "round_trip_string_to_uuid" {
     let uuid = gen_uuid()
     let str = uuid.to_string()
     match from_string(str) {
-      Some(restored) => {
+      Some(restored) =>
         if restored != uuid {
           abort("Round-trip failed: " + str)
         }
-      }
       None => abort("Failed to parse UUID string: " + str)
     }
   }
@@ -58,11 +57,10 @@ test "round_trip_urn_to_uuid" {
     let uuid = gen_uuid()
     let urn = uuid.to_urn()
     match from_urn(urn) {
-      Some(restored) => {
+      Some(restored) =>
         if restored != uuid {
           abort("URN round-trip failed: " + urn)
         }
-      }
       None => abort("Failed to parse UUID URN: " + urn)
     }
   }
@@ -279,12 +277,11 @@ test "v7_timestamp_is_extractable" {
   for i = 0; i < 100; i = i + 1 {
     let uuid = v7()
     match extract_timestamp(uuid) {
-      Some(ts) => {
+      Some(ts) =>
         // Timestamp should be positive (or at least not error)
         if ts < 0L {
           abort("V7 timestamp is negative")
         }
-      }
       None => abort("V7 UUID should have extractable timestamp")
     }
   }
@@ -302,11 +299,7 @@ test "v7_sequence_is_monotonic" {
     match extract_timestamp(uuid) {
       Some(ts) => {
         match prev_ts {
-          Some(prev) => {
-            if ts < prev {
-              abort("V7 sequence is not monotonic")
-            }
-          }
+          Some(prev) => if ts < prev { abort("V7 sequence is not monotonic") }
           None => ()
         }
         prev_ts = Some(ts)
@@ -320,15 +313,18 @@ test "v7_sequence_is_monotonic" {
 /// V7 Property: v7_with_timestamp should preserve timestamp
 test "v7_with_timestamp_preserves_timestamp" {
   let test_timestamps = [0L, 1L, 1000L, 123456789L, 0xFFFFFFFFFFFFL]
-
   for ts in test_timestamps {
     let uuid = v7_with_timestamp(ts)
     match extract_timestamp(uuid) {
-      Some(extracted) => {
+      Some(extracted) =>
         if extracted != ts {
-          abort("V7 timestamp not preserved: expected " + ts.to_string() + ", got " + extracted.to_string())
+          abort(
+            "V7 timestamp not preserved: expected " +
+            ts.to_string() +
+            ", got " +
+            extracted.to_string(),
+          )
         }
-      }
       None => abort("V7 UUID should have extractable timestamp")
     }
   }
@@ -339,10 +335,8 @@ test "v7_with_timestamp_preserves_timestamp" {
 test "v3_different_names_different_uuids" {
   let name1 = "test1"
   let name2 = "test2"
-
   let uuid1 = v3(ns_dns, name1)
   let uuid2 = v3(ns_dns, name2)
-
   if uuid1 == uuid2 {
     abort("Different names should produce different v3 UUIDs")
   }
@@ -353,10 +347,8 @@ test "v3_different_names_different_uuids" {
 test "v5_different_names_different_uuids" {
   let name1 = "test1"
   let name2 = "test2"
-
   let uuid1 = v5(ns_dns, name1)
   let uuid2 = v5(ns_dns, name2)
-
   if uuid1 == uuid2 {
     abort("Different names should produce different v5 UUIDs")
   }
@@ -370,7 +362,6 @@ test "different_namespaces_different_uuids" {
   let url_uuid = v3(ns_url, name)
   let oid_uuid = v3(ns_oid, name)
   let x500_uuid = v3(ns_x500, name)
-
   if dns_uuid == url_uuid {
     abort("Different namespaces should produce different UUIDs")
   }
@@ -390,11 +381,9 @@ test "different_namespaces_different_uuids" {
 /// Edge case: nil UUID has expected properties
 test "nil_uuid_properties" {
   let nil_uuid = nil()
-
   if not(nil_uuid.is_nil()) {
     abort("nil UUID should be nil")
   }
-
   if nil_uuid.to_string() != "00000000-0000-0000-0000-000000000000" {
     abort("nil UUID string is incorrect")
   }
@@ -411,11 +400,9 @@ test "nil_uuid_properties" {
 /// Edge case: max UUID has expected properties
 test "max_uuid_properties" {
   let max_uuid = max()
-
   if not(max_uuid.is_max()) {
     abort("max UUID should be max")
   }
-
   if max_uuid.to_string() != "ffffffff-ffff-ffff-ffff-ffffffffffff" {
     abort("max UUID string is incorrect")
   }
@@ -432,7 +419,6 @@ test "v3_empty_string_valid" {
   if version_char != '3' {
     abort("v3 with empty string should have version 3")
   }
-
   if not(variant_is_rfc9562(uuid)) {
     abort("v3 UUID should have RFC 9562 variant")
   }
@@ -445,7 +431,10 @@ test "to_string_simple_length" {
     let uuid = gen_uuid()
     let str = uuid.to_string_simple()
     if str.length() != 32 {
-      abort("to_string_simple should produce 32 characters, got: " + str.length().to_string())
+      abort(
+        "to_string_simple should produce 32 characters, got: " +
+        str.length().to_string(),
+      )
     }
   }
 }
@@ -456,10 +445,8 @@ test "v8_counter_deterministic" {
   let counter = 12345L
   let node_id = 1
   let app_id = 42
-
   let uuid1 = v8_counter(counter, node_id, app_id)
   let uuid2 = v8_counter(counter, node_id, app_id)
-
   if uuid1 != uuid2 {
     abort("v8_counter should be deterministic for same inputs")
   }
@@ -470,15 +457,12 @@ test "v8_counter_deterministic" {
 test "v8_mixed_valid_v8" {
   let timestamp = 123456789L
   let custom = 999
-
   let uuid = v8_mixed(timestamp, custom)
-
   let uuid_str = uuid.to_string()
   let version_char = Int::unsafe_to_char(uuid_str.code_unit_at(14).to_int())
   if version_char != '8' {
     abort("v8_mixed should produce version 8 UUID")
   }
-
   if not(variant_is_rfc9562(uuid)) {
     abort("v8_mixed should produce RFC 9562 variant")
   }
@@ -490,7 +474,6 @@ test "v3_v5_different_for_same_input" {
   let name = "example.com"
   let v3_uuid = v3(ns_dns, name)
   let v5_uuid = v5(ns_dns, name)
-
   if v3_uuid == v5_uuid {
     abort("v3 and v5 should produce different UUIDs for same input")
   }
@@ -518,7 +501,9 @@ test "version_character_at_position_14" {
   // Test v3
   let uuid_v3 = v3(ns_dns, "test")
   let uuid_str_v3 = uuid_v3.to_string()
-  let version_char_v3 = Int::unsafe_to_char(uuid_str_v3.code_unit_at(14).to_int())
+  let version_char_v3 = Int::unsafe_to_char(
+    uuid_str_v3.code_unit_at(14).to_int(),
+  )
   if version_char_v3 != '3' {
     abort("Version character mismatch for v3")
   }
@@ -526,7 +511,9 @@ test "version_character_at_position_14" {
   // Test v4
   let uuid_v4 = v4()
   let uuid_str_v4 = uuid_v4.to_string()
-  let version_char_v4 = Int::unsafe_to_char(uuid_str_v4.code_unit_at(14).to_int())
+  let version_char_v4 = Int::unsafe_to_char(
+    uuid_str_v4.code_unit_at(14).to_int(),
+  )
   if version_char_v4 != '4' {
     abort("Version character mismatch for v4")
   }
@@ -534,7 +521,9 @@ test "version_character_at_position_14" {
   // Test v5
   let uuid_v5 = v5(ns_dns, "test")
   let uuid_str_v5 = uuid_v5.to_string()
-  let version_char_v5 = Int::unsafe_to_char(uuid_str_v5.code_unit_at(14).to_int())
+  let version_char_v5 = Int::unsafe_to_char(
+    uuid_str_v5.code_unit_at(14).to_int(),
+  )
   if version_char_v5 != '5' {
     abort("Version character mismatch for v5")
   }
@@ -542,7 +531,9 @@ test "version_character_at_position_14" {
   // Test v7
   let uuid_v7 = v7()
   let uuid_str_v7 = uuid_v7.to_string()
-  let version_char_v7 = Int::unsafe_to_char(uuid_str_v7.code_unit_at(14).to_int())
+  let version_char_v7 = Int::unsafe_to_char(
+    uuid_str_v7.code_unit_at(14).to_int(),
+  )
   if version_char_v7 != '7' {
     abort("Version character mismatch for v7")
   }
@@ -550,7 +541,9 @@ test "version_character_at_position_14" {
   // Test v8
   let uuid_v8 = v8(gen_uuid_bytes())
   let uuid_str_v8 = uuid_v8.to_string()
-  let version_char_v8 = Int::unsafe_to_char(uuid_str_v8.code_unit_at(14).to_int())
+  let version_char_v8 = Int::unsafe_to_char(
+    uuid_str_v8.code_unit_at(14).to_int(),
+  )
   if version_char_v8 != '8' {
     abort("Version character mismatch for v8")
   }
@@ -596,7 +589,9 @@ test "urn_format_is_correct" {
     }
 
     // Extract UUID part and verify it matches original
-    let uuid_part = urn[9:].to_string() catch { _ => abort("URN substring failed") }
+    let uuid_part = urn[9:].to_string() catch {
+      _ => abort("URN substring failed")
+    }
     if uuid_part != uuid.to_string() {
       abort("URN UUID part does not match original UUID")
     }
@@ -658,17 +653,27 @@ test "stat_round_trip_string_with_coverage" {
 
   // Include edge cases in the distribution
   let test_uuids = [
-    nil(),  // Edge: nil
-    max(),  // Edge: max
-    v4(), v4(), v4(), v4(),  // Normal: v4
-    v7(), v7(), v7(), v7(),  // Normal: v7
+    nil(), // Edge: nil
+    max(), // Edge: max
+    v4(),
+    v4(),
+    v4(),
+    v4(), // Normal: v4
+    v7(),
+    v7(),
+    v7(),
+    v7(), // Normal: v7
   ]
-
   for uuid in test_uuids {
-    if uuid.is_nil() { nil_count = nil_count + 1 }
-    if uuid.is_max() { max_count = max_count + 1 }
-    if not(uuid.is_nil()) && not(uuid.is_max()) { normal_count = normal_count + 1 }
-
+    if uuid.is_nil() {
+      nil_count = nil_count + 1
+    }
+    if uuid.is_max() {
+      max_count = max_count + 1
+    }
+    if not(uuid.is_nil()) && not(uuid.is_max()) {
+      normal_count = normal_count + 1
+    }
     let str = uuid.to_string()
     match from_string(str) {
       Some(restored) => assert_eq(restored, uuid)
@@ -689,23 +694,24 @@ test "stat_uuid_string_length_with_coverage" {
   let mut max_count = 0
   let mut v4_count = 0
   let mut v7_count = 0
-
-  let test_uuids = [
-    nil(), max(), v4(), v4(), v4(), v7(), v7(), v7(),
-  ]
-
+  let test_uuids = [nil(), max(), v4(), v4(), v4(), v7(), v7(), v7()]
   for uuid in test_uuids {
-    if uuid.is_nil() { nil_count = nil_count + 1 }
-    if uuid.is_max() { max_count = max_count + 1 }
-
+    if uuid.is_nil() {
+      nil_count = nil_count + 1
+    }
+    if uuid.is_max() {
+      max_count = max_count + 1
+    }
     let uuid_str = uuid.to_string()
     let version_char = Int::unsafe_to_char(uuid_str.code_unit_at(14).to_int())
-    if version_char == '4' { v4_count = v4_count + 1 }
-    if version_char == '7' { v7_count = v7_count + 1 }
-
+    if version_char == '4' {
+      v4_count = v4_count + 1
+    }
+    if version_char == '7' {
+      v7_count = v7_count + 1
+    }
     assert_eq(uuid_str.length(), 36)
   }
-
   inspect(nil_count > 0, content="true")
   inspect(max_count > 0, content="true")
   inspect(v4_count >= 3, content="true")
@@ -723,17 +729,19 @@ test "stat_version_distribution" {
 
   // Test different versions
   let uuids = [
-    v3(ns_dns, "test"),  // v3
-    v4(), v4(), v4(),    // v4 (multiple)
-    v5(ns_dns, "test"),  // v5
-    v7(), v7(), v7(),    // v7 (multiple)
+    v3(ns_dns, "test"), // v3
+    v4(),
+    v4(),
+    v4(), // v4 (multiple)
+    v5(ns_dns, "test"), // v5
+    v7(),
+    v7(),
+    v7(), // v7 (multiple)
     v8(random_bytes(16)), // v8
   ]
-
   for uuid in uuids {
     let uuid_str = uuid.to_string()
     let version_char = Int::unsafe_to_char(uuid_str.code_unit_at(14).to_int())
-
     match version_char {
       '3' => v3_count = v3_count + 1
       '4' => v4_count = v4_count + 1
@@ -742,10 +750,11 @@ test "stat_version_distribution" {
       '8' => v8_count = v8_count + 1
       _ => ()
     }
-
-    assert_true(variant_is_rfc9562(uuid), msg="UUID should have RFC 9562 variant")
+    assert_true(
+      variant_is_rfc9562(uuid),
+      msg="UUID should have RFC 9562 variant",
+    )
   }
-
   inspect(v3_count >= 1, content="true")
   inspect(v4_count >= 3, content="true")
   inspect(v5_count >= 1, content="true")
@@ -759,24 +768,32 @@ test "stat_name_based_uuid_diversity" {
   let mut empty_count = 0
   let mut unicode_count = 0
   let mut normal_count = 0
-
   let test_names = [
-    "",           // Edge: empty
-    "测试",        // Edge: Unicode
-    "🌟test",      // Edge: emoji + ASCII
-    "test",       // Normal
-    "example.com", // Normal
-  ]
-
+    "", // Edge: empty
+     "测试", // Edge: Unicode
+     "🌟test", // Edge: emoji + ASCII
+     "test", // Normal
+     "example.com",
+  ] // Normal
   for name in test_names {
-    if name == "" { empty_count = empty_count + 1 }
+    if name == "" {
+      empty_count = empty_count + 1
+    }
     // Check for Unicode by looking for characters outside ASCII range
-    let has_unicode = name.length() > 0 && (
-      Int::unsafe_to_char(name.code_unit_at(0).to_int()) > '\u{007F}' ||
-      (name.length() > 1 && Int::unsafe_to_char(name.code_unit_at(1).to_int()) > '\u{007F}')
-    )
-    if has_unicode { unicode_count = unicode_count + 1 }
-    if name.length() >= 4 && name != "" { normal_count = normal_count + 1 }
+    let has_unicode = name.length() > 0 &&
+      (
+        Int::unsafe_to_char(name.code_unit_at(0).to_int()) > '\u{007F}' ||
+        (
+          name.length() > 1 &&
+          Int::unsafe_to_char(name.code_unit_at(1).to_int()) > '\u{007F}'
+        )
+      )
+    if has_unicode {
+      unicode_count = unicode_count + 1
+    }
+    if name.length() >= 4 && name != "" {
+      normal_count = normal_count + 1
+    }
 
     // Test v3
     let v3_uuid = v3(ns_dns, name)
@@ -793,7 +810,6 @@ test "stat_name_based_uuid_diversity" {
     // Different algorithms should produce different UUIDs
     assert_true(v3_uuid != v5_uuid, msg="v3 and v5 should differ")
   }
-
   inspect(empty_count >= 1, content="true")
   inspect(unicode_count >= 2, content="true")
   inspect(normal_count >= 3, content="true")
@@ -805,20 +821,23 @@ test "stat_v7_timestamp_coverage" {
   let mut zero_ts = 0
   let mut small_ts = 0
   let mut large_ts = 0
-
   let test_timestamps = [
-    0L,             // Edge: zero
-    1L,             // Edge: minimal positive
-    1000L,          // Small
-    123456789L,     // Medium
-    0xFFFFFFFFFFFFL // Edge: max 48-bit
+    0L, // Edge: zero
+     1L, // Edge: minimal positive
+     1000L, // Small
+     123456789L, // Medium
+     0xFFFFFFFFFFFFL, // Edge: max 48-bit
   ]
-
   for ts in test_timestamps {
-    if ts == 0L { zero_ts = zero_ts + 1 }
-    if ts > 0L && ts < 10000L { small_ts = small_ts + 1 }
-    if ts > 100000L { large_ts = large_ts + 1 }
-
+    if ts == 0L {
+      zero_ts = zero_ts + 1
+    }
+    if ts > 0L && ts < 10000L {
+      small_ts = small_ts + 1
+    }
+    if ts > 100000L {
+      large_ts = large_ts + 1
+    }
     let uuid = v7_with_timestamp(ts)
     match extract_timestamp(uuid) {
       Some(extracted) => assert_eq(extracted, ts)
@@ -830,7 +849,6 @@ test "stat_v7_timestamp_coverage" {
     let version_char = Int::unsafe_to_char(uuid_str.code_unit_at(14).to_int())
     assert_eq(version_char, '7')
   }
-
   inspect(zero_ts >= 1, content="true")
   inspect(small_ts >= 2, content="true")
   inspect(large_ts >= 2, content="true")
@@ -850,21 +868,22 @@ test "stat_bytes_reversibility_coverage" {
   for i = 0; i < 16; i = i + 1 {
     pattern_bytes[i] = i.to_byte()
   }
-
   let byte_arrays = [zero_bytes, max_bytes, pattern_bytes, random_bytes(16)]
-
   for bytes in byte_arrays {
-    if bytes[0] == b'\x00' && bytes[1] == b'\x00' { zero_count = zero_count + 1 }
-    if bytes[0] == b'\xFF' && bytes[1] == b'\xFF' { max_count = max_count + 1 }
-    if bytes[0] != b'\x00' && bytes[0] != b'\xFF' { pattern_count = pattern_count + 1 }
-
+    if bytes[0] == b'\x00' && bytes[1] == b'\x00' {
+      zero_count = zero_count + 1
+    }
+    if bytes[0] == b'\xFF' && bytes[1] == b'\xFF' {
+      max_count = max_count + 1
+    }
+    if bytes[0] != b'\x00' && bytes[0] != b'\xFF' {
+      pattern_count = pattern_count + 1
+    }
     let uuid1 = Uuid::new(bytes)
     let bytes2 = uuid1.bytes()
     let uuid2 = Uuid::new(bytes2)
-
     assert_eq(uuid1, uuid2)
   }
-
   inspect(zero_count >= 1, content="true")
   inspect(max_count >= 1, content="true")
 }
