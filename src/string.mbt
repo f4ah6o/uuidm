@@ -83,25 +83,68 @@ pub fn Uuid::to_string_simple(self : Uuid) -> String {
 
 ///|
 /// Parse UUID from string representation
-/// Accepts both hyphenated and non-hyphenated formats
+/// Accepts both hyphenated (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) and non-hyphenated formats
 pub fn from_string(s : String) -> Uuid? {
-  // Remove hyphens and convert to lowercase 
-  let cleaned = s
-
   // Must be exactly 32 hex characters (without hyphens) or 36 (with hyphens)
-  if cleaned.length() != 32 && cleaned.length() != 36 {
+  let len = s.length()
+  if len != 32 && len != 36 {
+    return None
+  }
+
+  // Extract hex characters (removing hyphens if present)
+  let mut hex_chars = ""
+  for i = 0; i < len; i = i + 1 {
+    let c = Int::unsafe_to_char(s.code_unit_at(i).to_int())
+    if c == '-' {
+      // Skip hyphens
+    } else if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') {
+      hex_chars = hex_chars + c.to_string()
+    } else {
+      // Invalid character
+      return None
+    }
+  }
+
+  // Must have exactly 32 hex characters after removing hyphens
+  if hex_chars.length() != 32 {
     return None
   }
 
   // Convert each pair of hex characters to bytes
   let bytes : FixedArray[Byte] = FixedArray::make(16, b'\x00')
-
-  // Simple parsing - for now just create a UUID from the string length
-  // This is a placeholder implementation
   for i = 0; i < 16; i = i + 1 {
-    bytes[i] = ((cleaned.length() + i) % 256).to_byte()
+    let high_char = Int::unsafe_to_char(hex_chars.code_unit_at(i * 2).to_int())
+    let low_char = Int::unsafe_to_char(hex_chars.code_unit_at(i * 2 + 1).to_int())
+
+    // Check if characters are valid hex
+    let high = try_hex_char_to_int(high_char)
+    let low = try_hex_char_to_int(low_char)
+
+    match (high, low) {
+      (Some(h), Some(l)) => {
+        bytes[i] = (h << 4).lor(l).to_byte()
+      }
+      _ => return None
+    }
   }
+
   Some(Uuid::new(bytes))
+}
+
+///|
+/// Try to convert a hexadecimal character to its numeric value
+/// Returns None if the character is not a valid hex character
+fn try_hex_char_to_int(c : Char) -> Int? {
+  let code = c.to_int()
+  if code >= '0'.to_int() && code <= '9'.to_int() {
+    Some(code - '0'.to_int())
+  } else if code >= 'a'.to_int() && code <= 'f'.to_int() {
+    Some(code - 'a'.to_int() + 10)
+  } else if code >= 'A'.to_int() && code <= 'F'.to_int() {
+    Some(code - 'A'.to_int() + 10)
+  } else {
+    None
+  }
 }
 
 ///|

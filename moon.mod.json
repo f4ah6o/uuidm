@@ -6,5 +6,8 @@
   "license": "ISC",
   "keywords": ["uuid", "guid", "rfc9562"],
   "description": "forked from bobzhang/uuim / Universally unique identifiers (UUIDs) for MoonBit - supports UUID versions 3, 4, 5, 7, and 8 according to RFC 9562",
-  "source": "src"
+  "source": "src",
+  "deps": {
+    "moonbitlang/quickcheck": "0.9.9"
+  }
 }
