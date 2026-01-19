@@ -642,3 +642,229 @@ test "v4_uuids_are_well_formed" {
     }
   }
 }
+
+// ============================================================
+// Statistical Property-Based Tests (with coverage tracking)
+// ============================================================
+// These tests track statistics on input distribution to ensure
+// good coverage of edge cases, boundary values, and normal cases.
+
+///|
+/// Statistical PBT: Round-trip with coverage tracking
+test "stat_round_trip_string_with_coverage" {
+  let mut nil_count = 0
+  let mut max_count = 0
+  let mut normal_count = 0
+
+  // Include edge cases in the distribution
+  let test_uuids = [
+    nil(),  // Edge: nil
+    max(),  // Edge: max
+    v4(), v4(), v4(), v4(),  // Normal: v4
+    v7(), v7(), v7(), v7(),  // Normal: v7
+  ]
+
+  for uuid in test_uuids {
+    if uuid.is_nil() { nil_count = nil_count + 1 }
+    if uuid.is_max() { max_count = max_count + 1 }
+    if not(uuid.is_nil()) && not(uuid.is_max()) { normal_count = normal_count + 1 }
+
+    let str = uuid.to_string()
+    match from_string(str) {
+      Some(restored) => assert_eq(restored, uuid)
+      None => abort("Failed to parse: " + str)
+    }
+  }
+
+  // Verify edge case coverage
+  inspect(nil_count == 1, content="true")
+  inspect(max_count == 1, content="true")
+  inspect(normal_count >= 8, content="true")
+}
+
+///|
+/// Statistical PBT: UUID string length with coverage
+test "stat_uuid_string_length_with_coverage" {
+  let mut nil_count = 0
+  let mut max_count = 0
+  let mut v4_count = 0
+  let mut v7_count = 0
+
+  let test_uuids = [
+    nil(), max(), v4(), v4(), v4(), v7(), v7(), v7(),
+  ]
+
+  for uuid in test_uuids {
+    if uuid.is_nil() { nil_count = nil_count + 1 }
+    if uuid.is_max() { max_count = max_count + 1 }
+
+    let uuid_str = uuid.to_string()
+    let version_char = Int::unsafe_to_char(uuid_str.code_unit_at(14).to_int())
+    if version_char == '4' { v4_count = v4_count + 1 }
+    if version_char == '7' { v7_count = v7_count + 1 }
+
+    assert_eq(uuid_str.length(), 36)
+  }
+
+  inspect(nil_count > 0, content="true")
+  inspect(max_count > 0, content="true")
+  inspect(v4_count >= 3, content="true")
+  inspect(v7_count >= 3, content="true")
+}
+
+///|
+/// Statistical PBT: Version distribution tracking
+test "stat_version_distribution" {
+  let mut v3_count = 0
+  let mut v4_count = 0
+  let mut v5_count = 0
+  let mut v7_count = 0
+  let mut v8_count = 0
+
+  // Test different versions
+  let uuids = [
+    v3(ns_dns, "test"),  // v3
+    v4(), v4(), v4(),    // v4 (multiple)
+    v5(ns_dns, "test"),  // v5
+    v7(), v7(), v7(),    // v7 (multiple)
+    v8(random_bytes(16)), // v8
+  ]
+
+  for uuid in uuids {
+    let uuid_str = uuid.to_string()
+    let version_char = Int::unsafe_to_char(uuid_str.code_unit_at(14).to_int())
+
+    match version_char {
+      '3' => v3_count = v3_count + 1
+      '4' => v4_count = v4_count + 1
+      '5' => v5_count = v5_count + 1
+      '7' => v7_count = v7_count + 1
+      '8' => v8_count = v8_count + 1
+      _ => ()
+    }
+
+    assert_true(variant_is_rfc9562(uuid), msg="UUID should have RFC 9562 variant")
+  }
+
+  inspect(v3_count >= 1, content="true")
+  inspect(v4_count >= 3, content="true")
+  inspect(v5_count >= 1, content="true")
+  inspect(v7_count >= 3, content="true")
+  inspect(v8_count >= 1, content="true")
+}
+
+///|
+/// Statistical PBT: Name-based UUID diversity
+test "stat_name_based_uuid_diversity" {
+  let mut empty_count = 0
+  let mut unicode_count = 0
+  let mut normal_count = 0
+
+  let test_names = [
+    "",           // Edge: empty
+    "测试",        // Edge: Unicode
+    "🌟test",      // Edge: emoji + ASCII
+    "test",       // Normal
+    "example.com", // Normal
+  ]
+
+  for name in test_names {
+    if name == "" { empty_count = empty_count + 1 }
+    // Check for Unicode by looking for characters outside ASCII range
+    let has_unicode = name.length() > 0 && (
+      Int::unsafe_to_char(name.code_unit_at(0).to_int()) > '\u{007F}' ||
+      (name.length() > 1 && Int::unsafe_to_char(name.code_unit_at(1).to_int()) > '\u{007F}')
+    )
+    if has_unicode { unicode_count = unicode_count + 1 }
+    if name.length() >= 4 && name != "" { normal_count = normal_count + 1 }
+
+    // Test v3
+    let v3_uuid = v3(ns_dns, name)
+    let v3_str = v3_uuid.to_string()
+    let v3_char = Int::unsafe_to_char(v3_str.code_unit_at(14).to_int())
+    assert_eq(v3_char, '3')
+
+    // Test v5
+    let v5_uuid = v5(ns_dns, name)
+    let v5_str = v5_uuid.to_string()
+    let v5_char = Int::unsafe_to_char(v5_str.code_unit_at(14).to_int())
+    assert_eq(v5_char, '5')
+
+    // Different algorithms should produce different UUIDs
+    assert_true(v3_uuid != v5_uuid, msg="v3 and v5 should differ")
+  }
+
+  inspect(empty_count >= 1, content="true")
+  inspect(unicode_count >= 2, content="true")
+  inspect(normal_count >= 3, content="true")
+}
+
+///|
+/// Statistical PBT: V7 timestamp range coverage
+test "stat_v7_timestamp_coverage" {
+  let mut zero_ts = 0
+  let mut small_ts = 0
+  let mut large_ts = 0
+
+  let test_timestamps = [
+    0L,             // Edge: zero
+    1L,             // Edge: minimal positive
+    1000L,          // Small
+    123456789L,     // Medium
+    0xFFFFFFFFFFFFL // Edge: max 48-bit
+  ]
+
+  for ts in test_timestamps {
+    if ts == 0L { zero_ts = zero_ts + 1 }
+    if ts > 0L && ts < 10000L { small_ts = small_ts + 1 }
+    if ts > 100000L { large_ts = large_ts + 1 }
+
+    let uuid = v7_with_timestamp(ts)
+    match extract_timestamp(uuid) {
+      Some(extracted) => assert_eq(extracted, ts)
+      None => abort("V7 UUID should have extractable timestamp")
+    }
+
+    // Verify version is 7
+    let uuid_str = uuid.to_string()
+    let version_char = Int::unsafe_to_char(uuid_str.code_unit_at(14).to_int())
+    assert_eq(version_char, '7')
+  }
+
+  inspect(zero_ts >= 1, content="true")
+  inspect(small_ts >= 2, content="true")
+  inspect(large_ts >= 2, content="true")
+}
+
+///|
+/// Statistical PBT: Bytes reversibility with edge cases
+test "stat_bytes_reversibility_coverage" {
+  let mut zero_count = 0
+  let mut max_count = 0
+  let mut pattern_count = 0
+
+  // Test various byte patterns
+  let zero_bytes : FixedArray[Byte] = FixedArray::make(16, b'\x00')
+  let max_bytes : FixedArray[Byte] = FixedArray::make(16, b'\xFF')
+  let pattern_bytes : FixedArray[Byte] = FixedArray::make(16, b'\x00')
+  for i = 0; i < 16; i = i + 1 {
+    pattern_bytes[i] = i.to_byte()
+  }
+
+  let byte_arrays = [zero_bytes, max_bytes, pattern_bytes, random_bytes(16)]
+
+  for bytes in byte_arrays {
+    if bytes[0] == b'\x00' && bytes[1] == b'\x00' { zero_count = zero_count + 1 }
+    if bytes[0] == b'\xFF' && bytes[1] == b'\xFF' { max_count = max_count + 1 }
+    if bytes[0] != b'\x00' && bytes[0] != b'\xFF' { pattern_count = pattern_count + 1 }
+
+    let uuid1 = Uuid::new(bytes)
+    let bytes2 = uuid1.bytes()
+    let uuid2 = Uuid::new(bytes2)
+
+    assert_eq(uuid1, uuid2)
+  }
+
+  inspect(zero_count >= 1, content="true")
+  inspect(max_count >= 1, content="true")
+}

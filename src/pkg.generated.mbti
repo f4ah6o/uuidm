@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "bobzhang/uuidm"
+package "f4ah6o/uuidm"
 
 // Values
 pub fn combine_namespace_and_name(Uuid, String) -> FixedArray[Byte]
