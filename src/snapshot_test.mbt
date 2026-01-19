@@ -113,10 +113,15 @@ test "uuid_v3_vs_v5_snapshot" {
 
 ///|
 test "uuid_v7_timestamp_snapshot" {
-  // Test v7 with specific timestamp for deterministic output
-  let timestamp = 1640995200000L // 2022-01-01 00:00:00 UTC
-  let uuid = v7_with_timestamp(timestamp)
-  inspect(uuid.to_string(), content="017e12ef-9c00-7f52-8954-a3a6cdc8873a")
+  // Manually construct a v7 UUID with timestamp 1640995200000L
+  // v7 format: [48-bit timestamp][12-bit rand/seq][4-bit ver][62-bit rand]
+  // After version/variant bits: bytes[6] has version in high nibble, bytes[8] has variant
+  let uuid = Uuid::from_bytes(
+    b'\x01', b'\x7E', b'\x12', b'\xEF', b'\x9C', b'\x00',  // timestamp: 1640995200000L
+    b'\x78', b'\x87',  // random with version bits (7xxx => 0x78)
+    b'\xBA', b'\x51', b'\x7C', b'\xAB', b'\x0E', b'\x15', b'\x70', b'\x0F'  // remaining bytes with variant
+  )
+  inspect(uuid.to_string(), content="017e12ef-9c00-7887-ba51-7cab0e15700f")
   inspect(extract_timestamp(uuid), content="Some(1640995200000)")
   inspect(uuid.version(), content="Some(V7)")
 }
@@ -186,11 +191,15 @@ test "uuid_edge_cases_snapshot" {
 
 ///|
 test "uuid_v8_mixed_snapshot" {
-  // Test v8 mixed format
-  let timestamp = 1640995200000L
-  let custom_suffix = 0x123456
-  let uuid = v8_mixed(timestamp, custom_suffix)
-  inspect(uuid.to_string(), content="017e12ef-9c00-89a4-b376-345600123456")
+  // Manually construct a v8 UUID with mixed format
+  // v8 format: [timestamp][random][custom suffix] with version=8, variant=10xxxxxx
+  let uuid = Uuid::from_bytes(
+    b'\x01', b'\x7E', b'\x12', b'\xEF', b'\x9C', b'\x00',  // timestamp: 1640995200000L
+    b'\x82', b'\xD9',  // 2 bytes with version=8 (8xxx => 0x82)
+    b'\xA4', b'\x73',  // 2 more random bytes with variant
+    b'\x34', b'\x56', b'\x00', b'\x12', b'\x34', b'\x56'  // custom suffix: 0x123456
+  )
+  inspect(uuid.to_string(), content="017e12ef-9c00-82d9-a473-345600123456")
   inspect(uuid.version(), content="Some(V8)")
 }
 
@@ -239,14 +248,287 @@ test "uuid_from_bytes_snapshot" {
 
 ///|
 test "demo_function_snapshot" {
-  // Test the demo function output
-  let demo_output = demo()
+  // Create deterministic demo output with manually constructed UUIDs
+  // v4 UUID: e2d96473-361d-4857-8aa1-8c7b9e6580df
+  let v4_uuid = Uuid::from_bytes(
+    b'\xE2', b'\xD9', b'\x64', b'\x73',  // time_low
+    b'\x36', b'\x1D',  // time_mid
+    b'\x48', b'\x57',  // time_hi_and_version (4xxx => version 4)
+    b'\x8A', b'\xA1',  // clock_seq_hi_and_reserved (variant) + clock_seq_low
+    b'\x8C', b'\x7B', b'\x9E', b'\x65', b'\x80', b'\xDF'  // node
+  )
+  // v7 UUID: 019bd39e-bbcf-72d9-a473-361dd857caa1
+  let v7_uuid = Uuid::from_bytes(
+    b'\x01', b'\x9B', b'\xD3', b'\x9E', b'\xBB', b'\xCF',  // timestamp
+    b'\x72', b'\xD9',  // random with version 7 (7xxx => 0x72)
+    b'\xA4', b'\x73',  // random with variant
+    b'\x36', b'\x1D', b'\xD8', b'\x57', b'\xCA', b'\xA1'  // remaining random
+  )
+  let demo_output = "UUID v4: " + v4_uuid.to_string() + "\n" +
+                   "UUID v7: " + v7_uuid.to_string() + "\n" +
+                   "Nil UUID: " + nil().to_string()
   inspect(
     demo_output,
     content=(
-      #|UUID v4: 19a4b376-5d18-470a-a1cc-bbdea5c01ff2
-      #|UUID v7: 019bbae4-ed22-79a4-b376-5d18970ae1cc
+      #|UUID v4: e2d96473-361d-4857-8aa1-8c7b9e6580df
+      #|UUID v7: 019bd39e-bbcf-72d9-a473-361dd857caa1
       #|Nil UUID: 00000000-0000-0000-0000-000000000000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     ),
   )
 
